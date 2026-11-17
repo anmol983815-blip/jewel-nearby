@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JewelKart</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#7a4a10">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" href="/icon-192.png">
+<style>
+:root{--bg:#fdf6e8;--card:#fffdf8;--ink:#2e2010;--mute:#7d6a52;--maroon:#7a4a10;--gold:#c8923a;--goldl:#f6e3bf;--line:#ecdcbc}
+@media (prefers-color-scheme:dark){:root{--bg:#1b140b;--card:#261c10;--ink:#f6ecda;--mute:#b8a68a;--maroon:#e0b45a;--gold:#c8923a;--goldl:#4a3a18;--line:#3d2e19}
+.tab.on,.btn.pri{color:#1b140b}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 80px}
+h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0;color:var(--maroon)}
+header{padding:18px 0 4px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+header h1{font-size:30px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.tabs{display:flex;gap:8px;margin:10px 0}
+.tab{flex:1;padding:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px}
+.tab.on{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+.brand{display:flex;align-items:center;gap:10px}
+.rate{background:var(--goldl);border-radius:10px;padding:10px 14px;font-size:14px}
+input,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0}
+.chip{white-space:nowrap;padding:7px 14px;border:1px solid var(--line);border-radius:20px;background:var(--card);color:var(--ink)}
+.chip.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+.shop{display:flex;gap:12px;padding:14px;margin:10px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;cursor:pointer}
+.logo{flex:none;width:52px;height:52px;border-radius:50%;background:var(--maroon);color:var(--goldl);display:grid;place-items:center;font:700 22px Georgia,serif}
+.shop h3{font-size:20px}
+.meta{font-size:13px;color:var(--mute)}
+.badge{display:inline-block;font-size:12px;padding:1px 8px;border-radius:10px;background:var(--goldl);color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.prod{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer}
+.ph{height:120px;display:grid;place-items:center;font-size:40px;background:linear-gradient(135deg,var(--goldl),var(--card));overflow:hidden}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.big{height:220px;border-radius:14px}
+.prod .i{padding:10px}
+.price{color:var(--maroon);font-weight:700}
+.btns{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+.btn{flex:1;min-width:90px;text-align:center;text-decoration:none;padding:12px;border-radius:10px;border:1px solid var(--maroon);color:var(--maroon);background:transparent;font-weight:600}
+.btn.wa{background:#1f8f4e;border-color:#1f8f4e;color:#fff}
+.btn.pri{background:var(--maroon);color:#fff}
+.back{background:none;border:0;color:var(--maroon);font-weight:600;padding:8px 0}
+table{width:100%;border-collapse:collapse;margin:8px 0}
+td{padding:8px 0;border-bottom:1px solid var(--line)}td:last-child{text-align:right;font-weight:600}
+label{display:block;font-size:13px;color:var(--mute);margin:10px 0 4px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row button{padding:6px 12px;border-radius:8px;border:1px solid var(--maroon);background:none;color:var(--maroon)}
+.empty{padding:24px 0;color:var(--mute);text-align:center}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--maroon);color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;max-width:90%}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><div class="brand"><img src="/logo-mark.png" alt="" width="44" height="44"><h1>JewelKart</h1></div><button class="chip" id="auth">Sign in</button></header>
+<div class="tabs" id="tabs"></div>
+<div class="rate" id="rate"></div>
+<main id="app"></main>
+</div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,doc,getDoc,getDocs,addDoc,setDoc,updateDoc,deleteDoc,query,where} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app=initializeApp({apiKey:"AIzaSyBZ0kqTG5FFtM_PIZjVFn31HRtIuf7IjOs",authDomain:"jewel-nearby.firebaseapp.com",projectId:"jewel-nearby",storageBucket:"jewel-nearby.firebasestorage.app",messagingSenderId:"141846446703",appId:"1:141846446703:web:a1990707c90b3132b5039a"});
+const auth=getAuth(app),db=getFirestore(app);
+const $=i=>document.getElementById(i);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const inr=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+const S={me:null,admin:false,mine:null,shops:[],rate:{},pos:null,view:"home",f:"All",q:"",shop:null,prods:[],cat:"All",prod:null,photo:""};
+const toast=t=>{const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2600)};
+const guard=async fn=>{try{await fn()}catch(e){console.error(e);toast(e.code==="permission-denied"?"Not allowed. Sign in first.":e.code==="auth/unauthorized-domain"?"Add this site to Firebase Authentication > Settings > Authorized domains":"Something went wrong. Try again.")}};
+const docs=sn=>sn.docs.map(d=>({id:d.id,...d.data()}));
+
+function dist(s){if(!S.pos||s.lat==null)return null;const r=x=>x*Math.PI/180,a=Math.sin(r(s.lat-S.pos.lat)/2)**2+Math.cos(r(S.pos.lat))*Math.cos(r(s.lat))*Math.sin(r(s.lng-S.pos.lng)/2)**2;return 12742*Math.asin(Math.sqrt(a))}
+function price(p){const r=p.m==="Silver"?S.rate.silver:(S.rate.gold24?S.rate.gold24*p.p/24:null);if(!r)return null;const b=p.w*r,mk=b*p.mk/100;return{b,mk,g:(b+mk)*.03,t:(b+mk)*1.03}}
+const purity=p=>p.m==="Silver"?"Silver":p.p+"K gold";
+const pic=p=>p.photo?`<img src="${p.photo}" alt="${esc(p.n)}">`:"💍";
+
+async function loadRate(){try{const d=await getDoc(doc(db,"rates","today"));S.rate=d.exists()?d.data():{}}catch(e){}
+ $("rate").innerHTML=S.rate.gold24?`Today’s gold 24K: <b>${inr(S.rate.gold24)}/g</b> · 22K: <b>${inr(S.rate.gold24*22/24)}/g</b>`+(S.rate.silver?` · Silver: <b>${inr(S.rate.silver)}/g</b>`:""):"Today’s rate not set yet. Prices will show once the admin sets it."}
+async function loadShops(){S.shops=docs(await getDocs(query(collection(db,"shops"),where("verified","==",true))))}
+async function loadMine(){S.mine=null;if(!S.me)return;const l=docs(await getDocs(query(collection(db,"shops"),where("ownerId","==",S.me.uid))));S.mine=l[0]||null}
+async function loadProds(id){S.prods=docs(await getDocs(query(collection(db,"products"),where("shopId","==",id)))).sort((a,b)=>a.t-b.t)}
+
+function tabs(){const t=[["home","Shops"],["mine","My shop"]];if(S.admin)t.push(["admin","Admin"]);
+ $("tabs").innerHTML=t.map(x=>`<button class="tab${(S.view===x[0]||(x[0]==="home"&&["shop","prod"].includes(S.view)))?" on":""}" data-a="go" data-v="${x[0]}">${x[1]}</button>`).join("");
+ $("auth").textContent=S.me?"Sign out":"Sign in"}
+
+function home(){S.view="home";tabs();
+ let l=S.shops.filter(s=>(S.f==="All"||(s.metals||[]).includes(S.f))&&(!S.q||(s.name+" "+s.area).toLowerCase().includes(S.q.toLowerCase())));
+ l=l.map(s=>({...s,d:dist(s)})).sort((a,b)=>S.pos?((a.d??1e9)-(b.d??1e9)):a.name.localeCompare(b.name));
+ let h=`<input id="q" placeholder="Search jeweller or area" value="${esc(S.q)}"><div class="chips">`+["All","Gold","Silver"].map(f=>`<button class="chip${S.f===f?" on":""}" data-a="f" data-f="${f}">${f}</button>`).join("")+`<button class="chip${S.pos?" on":""}" data-a="near">Near me</button></div>`;
+ if(!l.length)h+=`<div class="empty">No verified shops yet. Jewellers can register under “My shop”.</div>`;
+ l.forEach(s=>h+=`<div class="shop" data-a="shop" data-id="${s.id}"><div class="logo">${esc(s.name[0])}</div><div><h3>${esc(s.name)}</h3><div class="meta">${esc(s.area)}${s.d!=null?" · "+s.d.toFixed(1)+" km":""} · ${esc(s.hours)}</div><span class="badge">✔ Verified</span></div></div>`);
+ $("app").innerHTML=h;const q=$("q");q.oninput=e=>{S.q=e.target.value;const p=e.target.selectionStart;home();const n=$("q");n.focus();n.setSelectionRange(p,p)}}
+
+function shopPg(){S.view="shop";tabs();const s=S.shop;
+ const cats=["All",...new Set(S.prods.map(p=>p.c))];
+ let h=`<button class="back" data-a="go" data-v="home">← All shops</button><h2>${esc(s.name)}</h2><div class="meta">${esc(s.area)} · ${esc(s.hours)}</div><span class="badge">✔ Verified</span>
+ <div class="btns"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${esc(s.phone)}?text=${encodeURIComponent("Hi "+s.name+", I found you on JewelKart.")}">WhatsApp</a><a class="btn" href="tel:+${esc(s.phone)}">Call</a><a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${s.lat!=null?s.lat+","+s.lng:encodeURIComponent(s.name+" "+s.area)}">Directions</a></div>
+ <div class="chips">`+cats.map(c=>`<button class="chip${S.cat===c?" on":""}" data-a="cat" data-c="${esc(c)}">${esc(c)}</button>`).join("")+`</div><div class="grid">`;
+ const v=S.prods.filter(p=>S.cat==="All"||p.c===S.cat);
+ v.forEach(p=>{const pr=price(p);h+=`<div class="prod" data-a="prod" data-id="${p.id}"><div class="ph">${pic(p)}</div><div class="i"><b>${esc(p.n)}</b><div class="meta">${purity(p)} · ${p.w} g</div><div class="price">${pr?inr(pr.t):"Ask shop"}</div></div></div>`});
+ h+="</div>";if(!v.length)h+=`<div class="empty">No products here yet.</div>`;$("app").innerHTML=h}
+
+function prodPg(){S.view="prod";const s=S.shop,p=S.prod,pr=price(p);
+ let h=`<button class="back" data-a="shopback">← ${esc(s.name)}</button><div class="ph big">${pic(p)}</div><h2>${esc(p.n)}</h2><div class="meta">${esc(p.c)} · ${esc(s.name)}</div><table><tr><td>Metal</td><td>${purity(p)}</td></tr><tr><td>Weight</td><td>${p.w} g</td></tr>`;
+ h+=pr?`<tr><td>Metal value</td><td>${inr(pr.b)}</td></tr><tr><td>Making charge (${p.mk}%)</td><td>${inr(pr.mk)}</td></tr><tr><td>GST (3%)</td><td>${inr(pr.g)}</td></tr><tr><td>Estimated price</td><td class="price">${inr(pr.t)}</td></tr>`:`<tr><td>Price</td><td>Ask the shop</td></tr>`;
+ h+=`</table><div class="btns"><a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${esc(s.phone)}?text=${encodeURIComponent("Hi, I’m interested in "+p.n+" ("+purity(p)+", "+p.w+" g) seen on JewelKart.")}">Enquire on WhatsApp</a><a class="btn" href="tel:+${esc(s.phone)}">Call shop</a></div><div class="meta">Estimated price. The shop’s final price may differ.</div>`;
+ $("app").innerHTML=h}
+
+async function mine(){S.view="mine";tabs();
+ if(!S.me){$("app").innerHTML=`<h2>Jewellers</h2><p>Sign in with Google to register your shop and add products.</p><div class="btns"><button class="btn pri" data-a="auth">Sign in with Google</button></div>`;return}
+ if(!S.mine){$("app").innerHTML=`<h2>Register your shop</h2><label>Shop name</label><input id="sn"><label>Area or locality</label><input id="sa"><label>WhatsApp number with country code</label><input id="sph" type="tel" inputmode="numeric" placeholder="919812345678"><label>Opening hours</label><input id="sh" placeholder="10am–8pm"><label>You sell</label><select id="sm"><option>Gold</option><option>Silver</option><option>Gold and silver</option></select><input id="slat" type="hidden"><input id="slng" type="hidden"><div class="btns"><button class="btn" data-a="loc" id="locb">Use shop location (stand in your shop)</button></div><div class="btns"><button class="btn pri" data-a="saveshop">Save shop</button></div><div class="meta">New shops are shown to customers after the admin verifies them.</div>`;return}
+ await loadProds(S.mine.id);const s=S.mine;
+ let h=`<h2>${esc(s.name)}</h2><div class="meta">${esc(s.area)}</div>${s.verified?'<span class="badge">✔ Verified, visible to customers</span>':'<span class="badge">Waiting for verification</span>'}<h3 style="margin-top:18px">Add product</h3>
+ <label>Photo</label><input id="pf" type="file" accept="image/*"><div class="ph" id="pv" style="height:140px;margin-top:8px;border-radius:12px">📷</div><label>Product name</label><input id="on"><label>Category</label><select id="oc"><option>Rings</option><option>Chains</option><option>Earrings</option><option>Bangles</option><option>Other</option></select><label>Metal</label><select id="om"><option>Gold</option><option>Silver</option></select><label>Purity (karat, gold only)</label><select id="op"><option>22</option><option>24</option><option>18</option><option>14</option></select><label>Weight (grams)</label><input id="ow" type="number" inputmode="decimal"><label>Making charge (%)</label><input id="ok" type="number" inputmode="decimal" value="8"><div class="btns"><button class="btn pri" data-a="saveprod">Save product</button></div><h3>Your products (${S.prods.length})</h3>`;
+ S.prods.forEach(p=>h+=`<div class="row"><span>${esc(p.n)} · ${p.w} g</span><button data-a="delprod" data-id="${p.id}">Delete</button></div>`);
+ $("app").innerHTML=h;
+ $("pf").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,520/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);S.photo=c.toDataURL("image/jpeg",.6);$("pv").innerHTML=`<img src="${S.photo}" alt="Preview">`};im.onerror=()=>toast("Could not read that photo");im.src=r.result};r.readAsDataURL(f)}}
+
+async function adminPg(){S.view="admin";tabs();
+ const all=docs(await getDocs(collection(db,"shops")));
+ let h=`<h2>Today’s rate (₹ per gram)</h2><label>Gold 24K</label><input id="g24" type="number" inputmode="decimal" value="${S.rate.gold24||""}"><label>Silver</label><input id="sv" type="number" inputmode="decimal" value="${S.rate.silver||""}"><div class="btns"><button class="btn pri" data-a="saverate">Save rate</button></div><h3>Shops (${all.length})</h3>`;
+ all.forEach(s=>h+=`<div class="row"><span>${esc(s.name)}<br><span class="meta">${esc(s.area)} · ${esc(s.phone)} · ${s.verified?"Verified":"Pending"}</span></span><button data-a="verify" data-id="${s.id}" data-v="${s.verified?0:1}">${s.verified?"Unverify":"Approve"}</button></div>`);
+ if(!all.length)h+=`<div class="empty">No shops registered yet.</div>`;$("app").innerHTML=h}
+
+const val=i=>$(i).value.trim();
+const act={
+ go:async d=>guard(async()=>{if(d.v==="home"){await loadShops();home()}else if(d.v==="mine")await mine();else await adminPg()}),
+ f:d=>{S.f=d.f;home()},
+ near:()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{S.pos={lat:p.coords.latitude,lng:p.coords.longitude};home()},()=>toast("Allow location to sort by distance")):toast("Location not available"),
+ shop:d=>guard(async()=>{S.shop=S.shops.find(s=>s.id===d.id);S.cat="All";await loadProds(d.id);shopPg()}),
+ cat:d=>{S.cat=d.c;shopPg()},
+ prod:d=>{S.prod=S.prods.find(p=>p.id===d.id);prodPg()},
+ shopback:()=>shopPg(),
+ auth:()=>$("auth").click(),
+ loc:()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{$("slat").value=p.coords.latitude;$("slng").value=p.coords.longitude;$("locb").textContent="Location saved ✔"},()=>toast("Allow location to save it")):toast("Location not available"),
+ saveshop:()=>guard(async()=>{const n=val("sn"),a=val("sa"),ph=val("sph").replace(/\D/g,"");if(!n||!a)return toast("Add shop name and area");if(ph.length<10||ph.length>15)return toast("Enter number with country code");
+  const m=$("sm").value,lat=val("slat"),lng=val("slng");
+  await setDoc(doc(db,"shops",S.me.uid),{name:n,area:a,phone:ph,hours:val("sh")||"Ask shop",metals:m==="Gold and silver"?["Gold","Silver"]:[m],lat:lat?+lat:null,lng:lng?+lng:null,ownerId:S.me.uid,verified:false,t:Date.now()});
+  await loadMine();toast("Shop saved. Add your products.");await mine()}),
+ saveprod:()=>guard(async()=>{const n=val("on"),w=+val("ow");if(!n||!(w>0))return toast("Add a name and weight");
+  await addDoc(collection(db,"products"),{shopId:S.me.uid,n,c:$("oc").value,m:$("om").value,p:+$("op").value,w,mk:+val("ok")||0,photo:S.photo,t:Date.now()});S.photo="";toast("Product saved");await mine()}),
+ delprod:d=>guard(async()=>{if(!confirm("Delete this product?"))return;await deleteDoc(doc(db,"products",d.id));await mine()}),
+ saverate:()=>guard(async()=>{const g=+val("g24"),s=+val("sv");if(!(g>0))return toast("Enter the gold rate");await setDoc(doc(db,"rates","today"),{gold24:g,silver:s>0?s:null,t:Date.now()});await loadRate();toast("Rate saved")}),
+ verify:d=>guard(async()=>{await updateDoc(doc(db,"shops",d.id),{verified:d.v==="1"});await adminPg()})
+};
+document.addEventListener("click",e=>{const t=e.target.closest("[data-a]");if(t&&act[t.dataset.a])act[t.dataset.a](t.dataset)});
+$("auth").onclick=()=>guard(async()=>{S.me?await signOut(auth):await signInWithPopup(auth,new GoogleAuthProvider())});
+
+onAuthStateChanged(auth,async u=>{S.me=u;S.admin=false;S.mine=null;
+ if(u){try{await getDoc(doc(db,"admin","ping"));S.admin=true}catch(e){}try{await loadMine()}catch(e){}}
+ tabs();if(S.view==="mine"||S.view==="admin"){await act.go({v:"mine"})}else if(S.view==="home")home()});
+guard(async()=>{await loadRate();await loadShops();home()});
+if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
+</script>
+</body>
+</html>
